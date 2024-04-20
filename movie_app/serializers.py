@@ -4,7 +4,7 @@ from . models import Director, Movie, Review
 class DirectorSerializers(serializers.ModelSerializer):
     class Meta:
         model = Director
-        fields = 'name'.split()
+        fields = 'name movies_count'.split()
 
 class DirectorDetailSerializers(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +30,10 @@ class ReviewDetailSerializers(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+
+
+class MovieReviewSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = 'title duration review rating'.split()
+        depth = 1
