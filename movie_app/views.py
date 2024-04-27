@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from .models import Director, Movie, Review
 from .serializers import (DirectorSerializers, DirectorDetailSerializers, MovieSerializers,
                           MovieDetailSerializers, ReviewSerializers, ReviewDetailSerializers,
-                          MovieReviewSerializers)
+                          MovieReviewSerializers, DirectorValidateSerializer, MovieValidateSerializer,
+                          ReviewValidateSerializer)
 from rest_framework import status
 
 
@@ -14,6 +15,11 @@ def director_list_api_view(request):
         list_ = DirectorSerializers(directors, many=True).data
         return Response(data=list_)
     elif request.method == 'POST':
+
+        serializer = DirectorValidateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(data={'error': serializer.errors}, status=status.HTTP_406_NOT_ACCEPTABLE)
+
         name = request.data.get('name')
         director = Director.objects.create(name=name)
         return Response(data={'director_id': director.id}, status=status.HTTP_201_CREATED)
@@ -30,6 +36,10 @@ def director_detail_api_view(request, id):
         data = DirectorDetailSerializers(director).data
         return Response(data=data)
     elif request.method == 'PUT':
+
+        serializer = DirectorValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         director.name = request.data.get('name')
         director.save()
         return Response(data=DirectorDetailSerializers(director).data,
@@ -46,6 +56,10 @@ def movie_list_api_view(request):
         list_ = MovieSerializers(movies, many=True).data
         return Response(data=list_)
     elif request.method == 'POST':
+
+        serializer = MovieValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         title = request.data.get('title')
         description = request.data.get('description')
         duration = request.data.get('duration')
@@ -66,6 +80,10 @@ def movie_detail_api_view(request, id):
         data = MovieDetailSerializers(movie).data
         return Response(data=data)
     elif request.method == 'PUT':
+
+        serializer = MovieValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         movie.title = request.data.get('title')
         movie.description = request.data.get('description')
         movie.duration = request.data.get('duration')
@@ -85,6 +103,10 @@ def review_list_api_view(request):
         list_ = ReviewSerializers(reviews, many=True).data
         return Response(data=list_)
     elif request.method == 'POST':
+
+        serializer = ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         text = request.data.get('text')
         movie_id = request.data.get('movie_id')
         star = request.data.get('star')
@@ -104,6 +126,10 @@ def review_detail_api_view(request, id):
         data = ReviewDetailSerializers(review).data
         return Response(data=data)
     elif request.method == 'PUT':
+
+        serializer = ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         review.text = request.data.get('text')
         review.movie_id = request.data.get('movie_id')
         review.star = request.data.get('star')
@@ -121,15 +147,16 @@ def movies_reviews_api_view(request):
     list_ = MovieReviewSerializers(movies, many=True).data
     return Response(data=list_)
 
-    '''ниже был показан второй способ его можете не проверять просто для себ решил оставить'''
 
-    # movie_review = []
-    # for i in movies:
-    #     reviews = Review.objects.filter(movie=i)
-    #     movie_s = MovieSerializers(i)
-    #     review_s = ReviewSerializers(reviews, many=True)
-    #     movie_review.append({
-    #         'movie': movie_s.data,
-    #         'review': review_s.data
-    #     })
-    # return Response(movie_review)
+'''ниже был показан второй способ его можете не проверять просто для себ решил оставить'''
+
+# movie_review = []
+# for i in movies:
+#     reviews = Review.objects.filter(movie=i)
+#     movie_s = MovieSerializers(i)
+#     review_s = ReviewSerializers(reviews, many=True)
+#     movie_review.append({
+#         'movie': movie_s.data,
+#         'review': review_s.data
+#     })
+# return Response(movie_review)

@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Avg
 
+
 # Create your models here.
 class Director(models.Model):
     name = models.CharField(max_length=100)
@@ -14,7 +15,7 @@ class Director(models.Model):
 
 class Movie(models.Model):
     title = models.CharField(max_length=100)
-    description = models.TextField(max_length=255)
+    description = models.TextField(max_length=255, null=True, blank=True)
     duration = models.PositiveIntegerField()
     director = models.ForeignKey(Director, on_delete=models.CASCADE)
 
@@ -22,8 +23,10 @@ class Movie(models.Model):
         return self.title
 
     '''снизу функция выводид средний балл каждого фильма'''
+
     def rating(self):
         return self.review.aggregate(Avg('star'))['star__avg']
+
     '''а функция ниже выводит срдений балл всех фильмов'''
     # def rating(self):
     #     movies = Movie.objects.all()
