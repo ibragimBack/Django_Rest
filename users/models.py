@@ -7,4 +7,4 @@ class CustomUser(User):
 
 class ConfirmationCode(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    code = models.CharField(max_length=6, unique=True)
+    code = models.CharField(max_length=6)
