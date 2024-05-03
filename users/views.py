@@ -1,14 +1,10 @@
-import smtplib
-from email.message import EmailMessage
-import ssl
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from . models import CustomUser, EmaiConfirmation
-from . serializers import UserRegistrationSerializer, UserAuthorizationSerializer, ConfirmationCodeSerializer
+from .models import CustomUser, ConfirmationCode
+from .serializers import UserRegistrationSerializer, UserAuthorizationSerializer, ConfirmationCodeSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from django.conf import settings
 import random
 import string
 
@@ -18,26 +14,16 @@ def registration_api_view(request):
     if serializer.is_valid():
         username = serializer.validated_data.get('username')
         password = serializer.validated_data.get('password')
-        email = serializer.validated_data.get('email')
-        user = CustomUser.objects.create_user(username=username, password=password, email=email,is_active=False)
-        confirmation_code = ''.join(random.choices(string.digits, k=6))
-        EmaiConfirmation.objects.create(user=user, code=confirmation_code)
 
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
+        user = CustomUser.objects.create_user(username=username, password=password, is_active=False)
 
-        msg = EmailMessage()
-        msg.set_content(f'Your confirmation code is: {confirmation_code}')
-        msg['Subject'] = 'Confirmation Code'
-        msg['From'] = settings.EMAIL_HOST_USER
-        msg['To'] = email
+        while True:
+            new_code = ''.join(random.choices(string.digits, k=6))
+            if not ConfirmationCode.objects.filter(code=new_code).exists():
+                ConfirmationCode.objects.create(user=user, code=new_code)
+                break
 
-        with smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT, context=context) as server:
-            server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            server.send_message(msg)
-
-        return Response({'message': 'Confirmation code sent successfully'}, status=status.HTTP_200_OK)
+        return Response({'confirmation_code': new_code}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -55,16 +41,19 @@ def authorization_api_view(request):
 
 @api_view(['POST'])
 def confirm_code_api_view(request):
-    serializer = ConfirmationCodeSerializer(request.data)
+    serializer = ConfirmationCodeSerializer(data=request.data)
     if serializer.is_valid():
         code = serializer.validated_data.get('code')
         try:
-            confirmation_code = EmaiConfirmation.objects.get(code=code)
+            confirmation_code = ConfirmationCode.objects.get(code=code)
             user = confirmation_code.user
-            user.is_active = True
-            user.save()
-            confirmation_code.delete()
-            return Response({'message': 'Account confirmed successfully'}, status=status.HTTP_200_OK)
-        except EmaiConfirmation.DoesNotExist:
+            if user.is_active:
+                return Response({'error': 'Account already confirmed'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                user.is_active = True
+                user.save()
+                confirmation_code.delete()
+                return Response({'message': 'Account confirmed successfully'}, status=status.HTTP_200_OK)
+        except ConfirmationCode.DoesNotExist:
             return Response({'error': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

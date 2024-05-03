@@ -5,6 +5,6 @@ class CustomUser(User):
     pass
 
 
-class EmaiConfirmation(models.Model):
+class ConfirmationCode(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    code = models.CharField(max_length=6)
+    code = models.CharField(max_length=6, unique=True)

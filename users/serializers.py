@@ -1,11 +1,10 @@
 from rest_framework import serializers
-from . models import CustomUser, EmaiConfirmation
+from . models import CustomUser, ConfirmationCode
 from rest_framework.exceptions import ValidationError
 
 class UserAbstractSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
-    email = serializers.CharField()
 
 
 class UserAuthorizationSerializer(UserAbstractSerializer):
@@ -24,10 +23,10 @@ class UserRegistrationSerializer(UserAbstractSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = 'username email password'
+        fields = 'username password'
 
 
 class ConfirmationCodeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EmaiConfirmation
+        model = ConfirmationCode
         fields = ['code']
