@@ -80,4 +80,5 @@ cython_debug/
 poetry.toml
 .ruff_cache/
 pyrightconfig.json
+static
 # End of https://www.toptal.com/developers/gitignore/api/python
